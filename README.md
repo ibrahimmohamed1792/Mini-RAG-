@@ -39,13 +39,23 @@ source ~/.bashrc
 ## 🧱 Step 3 — Create the Project Environment
 
 Inside Ubuntu (WSL):
-```
+```bash
 conda create -n mini-rag python=3.14  
 conda activate mini-rag
 ```
 ---
 
+## Step 4 - install requirements 
+```bash
 
+$ pip install -r requiremnts.txt
+```
+
+## Step 5 - Set the enviroment variables
+```bash 
+$ cp .env.example .env
+```
+set your own enviroment variables in the `.env` file
 
 
 ## 🧑‍💻 Author
