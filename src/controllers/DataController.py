@@ -14,4 +14,4 @@ class DataController(BaseController) :
         if file.size > self.app_settings.FILE_MAX_SIZE*self.scale:
             return False
         else:
-            return False
+            return True
