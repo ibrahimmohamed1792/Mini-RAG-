@@ -8,6 +8,7 @@ class Settings(BaseSettings):
 
     FILE_ALLOWED_TYPES: list
     FILE_MAX_SIZE: int
+    FILE_DEFULT_CHUNK_SIZE:int
     
 
 
