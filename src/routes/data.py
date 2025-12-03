@@ -10,7 +10,7 @@ data_router=APIRouter(prefix="/data/v1",
                       )
 
 @data_router.post("/upload/{project_id}")
-def upload_data(project_id:str,file:UploadFile,app_settings:Settings = Depends(get_settings)):
+async def upload_data(project_id:str,file:UploadFile,app_settings:Settings = Depends(get_settings)):
     data_controller = DataController()
 
     is_valid,response_signal=data_controller.ValidateType(file=file)
@@ -22,7 +22,11 @@ def upload_data(project_id:str,file:UploadFile,app_settings:Settings = Depends(g
     project_dir_path=ProjectController().get_project_path(Project_id=project_id)
     file_path=os.path.join(project_dir_path,file.filename)
 
-    async with
+    async with aiofiles.open(file_path,"wb") as f:
+        while chunk := await file.read(app_settings.FILE_DEFULT_CHUNK_SIZE) :
+            await f.write(chunk)
+
+
     return {"opreation done":response_signal}
 
 
