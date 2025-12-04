@@ -1,5 +1,8 @@
 from .BaseController import BaseController
+from .ProjectController import ProjectController
 from fastapi import UploadFile
+import re
+import os
 from models import ResponseSignal
 class DataController(BaseController) :
     def __init__(self):
@@ -15,3 +18,33 @@ class DataController(BaseController) :
             return False ,ResponseSignal.FILE_SIZE_EXCEEDED.value
         else:
             return True ,ResponseSignal.FILE_VALIDATED_SUCCESS
+
+    
+    def generate_unique_file_name(self,orignal_file_name:str,project_id:str):
+        random_key=self.generate_random_string()
+        project_path=ProjectController().get_project_path(project_id=project_id)
+
+        clean_file_name=self.get_clean_file_name(orig_file_name=orignal_file_name)
+
+        new_file_path=os.path.join(project_path,clean_file_name+"_"+random_key)
+
+        while os.path.exists(new_file_path):
+            random_key=self.generate_random_string()
+            new_file_path=os.path.join(project_path,random_key+"_"+clean_file_name)
+
+        return new_file_path, random_key + "_" + clean_file_name
+
+
+
+    
+    
+    
+    def get_clean_file_name(self, orig_file_name: str):
+
+        # remove any special characters, except underscore and .
+        cleaned_file_name = re.sub(r'[^\w.]', '', orig_file_name.strip())
+
+        # replace spaces with underscore
+        cleaned_file_name = cleaned_file_name.replace(" ", "_")
+
+        return cleaned_file_name

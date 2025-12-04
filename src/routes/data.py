@@ -19,8 +19,12 @@ async def upload_data(project_id:str,file:UploadFile,app_settings:Settings = Dep
         status_code=status.HTTP_400_BAD_REQUEST,
         content={"opreation done":response_signal}
     )
-    project_dir_path=ProjectController().get_project_path(Project_id=project_id)
-    file_path=os.path.join(project_dir_path,file.filename)
+    project_dir_path=ProjectController().get_project_path(project_id=project_id)
+    file_path, file_id = data_controller.generate_unique_file_name(
+        orignal_file_name=file.filename,
+        project_id=project_id
+    )
+
 
     async with aiofiles.open(file_path,"wb") as f:
         while chunk := await file.read(app_settings.FILE_DEFULT_CHUNK_SIZE) :
