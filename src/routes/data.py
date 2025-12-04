@@ -2,9 +2,10 @@ from fastapi import FastAPI,APIRouter,Depends,UploadFile,status
 from fastapi.responses import JSONResponse
 from controllers import DataController,ProjectController
 from helpers.config import get_settings,Settings
+import logging
 import os
 import aiofiles
-
+logger=logging.getLogger('uvicorn.error')
 data_router=APIRouter(prefix="/data/v1",
                       tags=["api_v1","data"],
                       )
@@ -26,9 +27,17 @@ async def upload_data(project_id:str,file:UploadFile,app_settings:Settings = Dep
     )
 
 
-    async with aiofiles.open(file_path,"wb") as f:
-        while chunk := await file.read(app_settings.FILE_DEFULT_CHUNK_SIZE) :
+    try:
+        async with aiofiles.open(file_path,"wb") as f:
+          while chunk := await file.read(app_settings.FILE_DEFULT_CHUNK_SIZE) :
             await f.write(chunk)
+    except Exception as e:
+        logger.error(f"error while uploading {e}")  
+        return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={"opreation done":response_signal}
+        )
+     
 
 
     return {"opreation done":response_signal}

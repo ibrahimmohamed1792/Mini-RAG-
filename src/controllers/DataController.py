@@ -17,7 +17,7 @@ class DataController(BaseController) :
         if file.size > self.app_settings.FILE_MAX_SIZE*self.scale:
             return False ,ResponseSignal.FILE_SIZE_EXCEEDED.value
         else:
-            return True ,ResponseSignal.FILE_VALIDATED_SUCCESS
+            return True ,ResponseSignal.FILE_VALIDATED_SUCCESS.value
 
     
     def generate_unique_file_name(self,orignal_file_name:str,project_id:str):
