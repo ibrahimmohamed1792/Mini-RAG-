@@ -62,19 +62,29 @@ async def process_endpoint(project_id:str,proccess_request:ProccessRequest):
    processcontroller=ProcessController(project_id=project_id)
 
    file_content=processcontroller.get_file_content(file_id=file_id)
+   file_id=proccess_request.file_id
+   chunk_size=proccess_request.chunk_size
+   overlap_size=proccess_request.overlap_size
+   
+   processcontroller=ProcessController(project_id=project_id)
+
+   file_content=processcontroller.get_file_content(file_id=file_id)
    file_chunks=processcontroller.process_file_content(file_content=file_content,file_id=file_id,
                                                       chunk_size=chunk_size,overlap_size=overlap_size)
    if file_chunks is None or len(file_chunks) == 0:
-    return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={
-                "signal": ResponseSignal.PROCESSING_FAILED.value
-            }
-    )
+       return JSONResponse(
+           status_code=status.HTTP_400_BAD_REQUEST,
+           content={
+               "signal": ResponseSignal.PROCESSING_FAILED.value
+           }
+       )
+
+   return file_chunks
         
+    
         
     
            
        
 
-    return file_chunks
+    
