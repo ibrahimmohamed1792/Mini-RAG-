@@ -2,8 +2,8 @@ from pydantic import BaseModel,Field,validator
 from typing import Optional
 from bson.objectid import ObjectId
 
-class project(BaseModel):
-    _id: Optional[ObjectId]
+class Project(BaseModel):
+    id :Optional[ObjectId] =Field(None,alias="_id")
     project_id: str =Field(...,min_length=1)
 
     @validator('project_id')
