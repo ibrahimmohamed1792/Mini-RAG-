@@ -21,7 +21,7 @@ data_router=APIRouter(prefix="/data/v1",
 
 @data_router.post("/upload/{project_id}")
 async def upload_data(request:Request,project_id:str,file:UploadFile,app_settings:Settings = Depends(get_settings)):
-    project_model=ProjectModel(
+    project_model=await ProjectModel.create_instance(
        db_client=request.app.db_client
     )
     project=await project_model.get_or_create_project(project_id=project_id)
@@ -70,7 +70,7 @@ async def process_endpoint(request:Request,project_id:str,proccess_request:Procc
    overlap_size=proccess_request.overlap_size
    do_reset=proccess_request.do_reset
 
-   project_model=ProjectModel(
+   project_model= await ProjectModel.create_instance(
        db_client=request.app.db_client
     )
    project=await project_model.get_or_create_project(project_id=project_id)
@@ -106,7 +106,7 @@ async def process_endpoint(request:Request,project_id:str,proccess_request:Procc
 
    ]
 
-   chunk_model=DataChunkModel(db_client=request.app.db_client)
+   chunk_model= await DataChunkModel.create_instance(db_client=request.app.db_client)
    if do_reset == 1:
         _ = await chunk_model.delete_chunks_by_project_id(
             project_id=project.id

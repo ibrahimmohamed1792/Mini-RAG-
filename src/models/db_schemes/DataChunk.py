@@ -14,11 +14,9 @@ class DataChunk(BaseModel):
     class Config:
         arbitrary_types_allowed=True
 
-
-
-@classmethod
-def get_indexes(cls):
-    return[{
+    @classmethod
+    def get_indexes(cls):
+        return[{
         "key":[
             ("chunk_project_id",1)
         ],
@@ -27,3 +25,7 @@ def get_indexes(cls):
         "unique":False
 
     }]
+    
+
+
+

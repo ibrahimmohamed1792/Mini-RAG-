@@ -10,6 +10,9 @@ class ProjectModel(BaseDataModel):
         self.collection=self.db_client[DataBaseEnum.COLLECTION_PROJECT_NAME.value]
 
 
+
+
+
     async def init_collection(self):
         all_collectinos= await self.db_client.list_collection_names()
         if DataBaseEnum.COLLECTION_PROJECT_NAME.value not in all_collectinos:
@@ -21,6 +24,13 @@ class ProjectModel(BaseDataModel):
                     name=index["name"],
                     unique=index["unique"]
                 )
+    
+    @classmethod
+    async def create_instance(cls,db_client:object):
+        instance=cls(db_client=db_client)
+        await instance.init_collection()
+        return instance
+
 
 
 
