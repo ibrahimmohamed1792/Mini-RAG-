@@ -8,9 +8,10 @@ import os
 import aiofiles 
 from .schemes.data import ProccessRequest
 from models.ProjectModel import ProjectModel
+from models.AssetModel import AssetModel
 from models.DataChunkModel import DataChunkModel
-from models.db_schemes import DataChunk
-
+from models.db_schemes import DataChunk,Asset
+from models.enums import AssetTypeEnums
 
 
 
@@ -54,6 +55,13 @@ async def upload_data(request:Request,project_id:str,file:UploadFile,app_setting
                 }
         )
      
+    asset_model=AssetModel.create_instance(db_client=request.app.db_client)
+    asset_resource=Asset(asset_project_id=str(project.id),
+                         asset_type=AssetTypeEnums.FILE.value,
+                         asset_name=file_id,
+                         asset_size=os.path.getsize(file_path))
+    
+    asset_record=await asset_model.create_asset(asset=asset_resource)
 
 
     return {"opreation done":response_signal,

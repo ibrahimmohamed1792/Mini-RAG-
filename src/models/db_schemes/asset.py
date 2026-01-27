@@ -9,8 +9,8 @@ class Asset(BaseModel):
     asset_project_id:ObjectId
     asset_type:str = Field(...,min_length=1)
     asset_name:str = Field(...,min_length=1)
-    asset_size:int =Field(ge=0,default=None)
-    asset_pushed_at :datetime =Field(default=datetime.now(timezone.utc))
+    asset_size:Optional[int] =Field(ge=0,default=None)
+    asset_pushed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     asset_config:dict =Field(default=None)
 
 
@@ -32,7 +32,7 @@ class Asset(BaseModel):
             ("asset_project_id",1),("asset_name",1)
         ],
 
-        "name":"asset_project_id_index_1",
+        "name":"asset_project_id_name_index_1",
         "unique":True
 
     }

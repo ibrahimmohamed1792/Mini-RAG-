@@ -10,15 +10,15 @@ class ProcessController(BaseController):
     def __init__(self, project_id):
         super().__init__()
         self.project_id = project_id
-        # FIX 1: Instantiate the class before calling the method
+        # Instantiate the class before calling the method
         self.project_path = ProjectController().get_project_path(project_id=project_id)
 
     def get_file_extension(self, file_id: str):
-        # FIX 2: Use splitext to get '.pdf' instead of the full filename
+        # Use splitext to get '.pdf' instead of the full filename
         return os.path.splitext(file_id)[-1]
     
     def get_file_loader(self, file_id: str):
-        # FIX 3: Pass file_id, not the undefined file_ext
+        # Pass file_id, not the undefined file_ext
         file_ext = self.get_file_extension(file_id=file_id)
         
         file_path = os.path.join(
@@ -37,13 +37,13 @@ class ProcessController(BaseController):
     def get_file_content(self, file_id: str):
         loader = self.get_file_loader(file_id=file_id)
         
-        # FIX 4: Handle cases where loader is None to prevent crash
+        # Handle cases where loader is None to prevent crash
         if not loader:
             return None
 
         return loader.load()
     
-    # FIX 5: Fixed typo 'slef' to 'self'
+    
     def process_file_content(self, file_content: list, file_id: str, chunk_size: int=100, overlap_size: int=20):
         if not file_content:
             return None
