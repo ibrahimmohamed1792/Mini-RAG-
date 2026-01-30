@@ -11,7 +11,7 @@ from models.ProjectModel import ProjectModel
 from models.AssetModel import AssetModel
 from models.DataChunkModel import DataChunkModel
 from models.db_schemes import DataChunk,Asset
-from models.enums import AssetTypeEnums
+from models import AssetTypeEnums
 
 
 
@@ -55,8 +55,8 @@ async def upload_data(request:Request,project_id:str,file:UploadFile,app_setting
                 }
         )
      
-    asset_model=AssetModel.create_instance(db_client=request.app.db_client)
-    asset_resource=Asset(asset_project_id=str(project.id),
+    asset_model=await AssetModel.create_instance(db_client=request.app.db_client)
+    asset_resource=Asset(asset_project_id=project.id,
                          asset_type=AssetTypeEnums.FILE.value,
                          asset_name=file_id,
                          asset_size=os.path.getsize(file_path))
@@ -71,68 +71,90 @@ async def upload_data(request:Request,project_id:str,file:UploadFile,app_setting
 
 
 @data_router.post("/process/{project_id}")
-async def process_endpoint(request:Request,project_id:str,proccess_request:ProccessRequest):
-   
-   file_id=proccess_request.file_id
-   chunk_size=proccess_request.chunk_size
-   overlap_size=proccess_request.overlap_size
-   do_reset=proccess_request.do_reset
+async def process_endpoint(request: Request, project_id: str, process_request: ProccessRequest):
+    no_record = 0
+    no_assets = 0
 
-   project_model= await ProjectModel.create_instance(
-       db_client=request.app.db_client
-    )
-   project=await project_model.get_or_create_project(project_id=project_id)
-   
-   processcontroller=ProcessController(project_id=project_id)
+    project_model = await ProjectModel.create_instance(db_client=request.app.db_client)
+    chunk_model = await DataChunkModel.create_instance(db_client=request.app.db_client)
+    asset_model = await AssetModel.create_instance(db_client=request.app.db_client)
 
-   file_content=processcontroller.get_file_content(file_id=file_id)
-   file_id=proccess_request.file_id
-   chunk_size=proccess_request.chunk_size
-   overlap_size=proccess_request.overlap_size
-   
-   processcontroller=ProcessController(project_id=project_id)
+    project = await project_model.get_or_create_project(project_id=project_id)
+    project_file_ids = {}
 
-   file_content=processcontroller.get_file_content(file_id=file_id)
-   file_chunks=processcontroller.process_file_content(file_content=file_content,file_id=file_id,
-                                                      chunk_size=chunk_size,overlap_size=overlap_size)
-   if file_chunks is None or len(file_chunks) == 0:
-       return JSONResponse(
-           status_code=status.HTTP_400_BAD_REQUEST,
-           content={
-               "signal": ResponseSignal.PROCESSING_FAILED.value
-           }
-       )
+    # --- 1. Fetching Assets ---
+    if process_request.file_id:
+        # Check if searching by name or ID. Usually, file_id from request is the asset_name
+        asset_record = await asset_model.get_asset_record(
+            asset_project_id=project.id,
+            asset_name=process_request.file_id
+        )
+        if asset_record:
+            project_file_ids = {asset_record.id: asset_record.asset_name}
+        else:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"signal": ResponseSignal.NO_FILES_ERROR.value}
+            )
+    else:
+        project_assets = await asset_model.get_all_project_assets(
+            asset_project_id=project.id,
+            asset_type=AssetTypeEnums.FILE.value
+        )
+        project_file_ids = {record.id: record.asset_name for record in project_assets}
 
-   file_chunks_records=[
-      DataChunk(
-         chunk_text=chunk.page_content,
-         chunk_metadata=chunk.metadata,
-         chunk_order=i+1,
-         chunk_project_id=project.id
-         )
-      for i, chunk in enumerate(file_chunks)
-
-   ]
-
-   chunk_model= await DataChunkModel.create_instance(db_client=request.app.db_client)
-   if do_reset == 1:
-        _ = await chunk_model.delete_chunks_by_project_id(
-            project_id=project.id
+    if not project_file_ids:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"signal": ResponseSignal.NO_FILES_ERROR.value}
         )
 
-   no_record= await chunk_model.insert_many_chunks(chunks=file_chunks_records)
+    # --- 2. Reset Logic ---
+    if process_request.do_reset == 1:
+        await chunk_model.delete_chunks_by_project_id(project_id=project.id)
 
-   return JSONResponse(
+    # --- 3. The Processing Loop ---
+    processcontroller = ProcessController(project_id=project_id)
+
+    for asset_id, file_id in project_file_ids.items():
+        file_content = processcontroller.get_file_content(file_id=file_id)
+
+        if file_content is None:
+            logger.error(f"Can't find a source for the file: {file_id}")
+            continue # Skip to next file, don't stop the whole process
+
+        file_chunks = processcontroller.process_file_content(
+            file_content=file_content,
+            file_id=file_id,
+            chunk_size=process_request.chunk_size,
+            overlap_size=process_request.overlap_size
+        )
+
+        if not file_chunks:
+            logger.warning(f"No chunks generated for file: {file_id}")
+            continue # Skip to next file
+
+        file_chunks_records = [
+            DataChunk(
+                chunk_text=chunk.page_content,
+                chunk_metadata=chunk.metadata,
+                chunk_order=i + 1,
+                chunk_project_id=project.id,
+                chunk_asset_id=asset_id
+            )
+            for i, chunk in enumerate(file_chunks)
+        ]
+
+        # INSERT INSIDE THE LOOP
+        inserted_count = await chunk_model.insert_many_chunks(chunks=file_chunks_records)
+        no_record += inserted_count
+        no_assets += 1
+
+    # --- 4. Final Response ---
+    return JSONResponse(
         content={
             "signal": ResponseSignal.PROCESSING_SUCCESS.value,
-            "inserted_chunks": no_record
+            "inserted_chunks": no_record,
+            "no_assets_processed": no_assets
         }
-    )  
-        
-    
-        
-    
-           
-       
-
-    
+    )
