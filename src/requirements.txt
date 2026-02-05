@@ -7,3 +7,6 @@ aiofiles==25.1.0
 langchain==1.1.2
 PyMuPDF==1.26.6
 motor==3.7.1
+openai==2.16.0
+google-genai==1.61.0
+qdrant-client==1.16.2
