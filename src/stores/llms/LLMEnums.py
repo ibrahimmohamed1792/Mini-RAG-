@@ -17,4 +17,11 @@ class GOOGLEENUMS(Enum):
     USER="user"
     ASSITANT="assitant"
     SYSTEM="system"
+
+
+
+class DocumentTypeEnum(Enum):
+    DOCUMENT = "document"
+    QUERY = "query"
+    
     

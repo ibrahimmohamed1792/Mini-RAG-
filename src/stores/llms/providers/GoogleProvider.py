@@ -1,4 +1,5 @@
-from ..llms import LLMEnums,LLMInterface
+from ...llms import LLMEnums,LLMInterface
+from ...llms.LLMInterface import LLMInterface 
 from google import genai
 import os
 from dotenv import load_dotenv

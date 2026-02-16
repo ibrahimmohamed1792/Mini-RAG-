@@ -3,7 +3,7 @@ from ..VectorDBInterface import VectorDBInterface
 from ..VectorDBEnums import DistanceMethodEnums
 import logging
 from typing import List
-
+import uuid
 
 class QdrantDBProvider(VectorDBInterface):
 
@@ -35,7 +35,10 @@ class QdrantDBProvider(VectorDBInterface):
              return True
          
          return False
+    def get_collection_info(self, collection_name: str) -> dict:
+        return self.client.get_collection(collection_name=collection_name)
     
+
     def list_all_collections(self) -> List:
        return self.client.get_collections()
     
@@ -74,9 +77,9 @@ class QdrantDBProvider(VectorDBInterface):
             return None
         
         try:
-            _ = self.client.upload_records(
+            _ = self.client.upload_points(
                 collection_name=collection_name,
-                records=[
+                points=[
                     models.Record(
                         id=record_id,
                         vector=vector,
@@ -100,40 +103,64 @@ class QdrantDBProvider(VectorDBInterface):
         if record_ids is None:
             record_ids = [None] * len(texts)
 
+        if record_ids is None:
+           record_ids = [str(uuid.uuid4()) for _ in range(len(texts))]
+
         for i in range(0, len(texts), batch_size):
             batch_end = i + batch_size
 
             batch_texts = texts[i:batch_end]
             batch_vectors = vectors[i:batch_end]
             batch_metadata = metadata[i:batch_end]
+            b_ids = record_ids[i:batch_end]
+            
+            
+            
+            batch_records = []
 
-            batch_records = [
-                models.Record(
-                    vector=batch_vectors[x],
-                    payload={
-                        "text": batch_texts[x], "metadata": batch_metadata[x]
-                    }
+            
+                        
+            
+            for text, vector, meta,rid in zip(batch_texts, batch_vectors, batch_metadata,b_ids):
+                
+                final_id = rid if rid is not None else str(uuid.uuid4())
+                record = models.Record(
+                    id=final_id,
+                    vector=vector,
+                    payload={"text": text, "metadata": meta}
                 )
+                batch_records.append(record)
 
-                for x in range(len(batch_texts))
-            ]
-
-            try:
-                _ = self.client.upload_records(
-                    collection_name=collection_name,
-                    records=batch_records,
-                )
-            except Exception as e:
-                self.logger.error(f"Error while inserting batch: {e}")
-                return False
+                try:
+                    _ = self.client.upload_points(
+                        collection_name=collection_name,
+                        points=batch_records,
+                    )
+                except Exception as e:
+                    self.logger.error(f"Error while inserting batch: {e}")
+                    return False
 
         return True
         
-    def search_by_vector(self, collection_name: str, vector: list, limit: int = 5):
+    def search_by_vector(self, collection_name: str,source_file:str, vector: list, limit: int = 5):
 
-        return self.client.search(
+        query_filter=None
+
+        if source_file:
+          
+            query_filter = models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key="metadata.source", # Path to the key in your payload
+                        match=models.MatchValue(value=source_file)
+                    )
+                ]
+            )
+
+        return self.client.query_points(
             collection_name=collection_name,
-            query_vector=vector,
+            query=vector,
+            query_filter=query_filter,
             limit=limit
         )
         
