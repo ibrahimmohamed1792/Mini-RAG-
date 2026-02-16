@@ -1,5 +1,5 @@
 from .LLMEnums import LLMEnum,OPENAIENUMS,GOOGLEENUMS
-from ..providers import OpenAIProvider,GoogleProvider
+from ..llms.providers import OpenAIProvider,GoogleProvider
 
 class LlmProviderFactory():
     def __init__(self,config:dict):
