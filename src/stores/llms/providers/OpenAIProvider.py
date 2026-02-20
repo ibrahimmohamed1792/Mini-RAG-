@@ -15,7 +15,7 @@ class OpenAIProvider(LLMInterface):
                  default_tempreture:float=.1):
         
         self.api_key=api_key
-        self.api_url=api_url
+        self.base_url=api_url if api_url and len(api_url) else None
         
         self.default_max_input_tokens=default_max_input_tokens
         self.default_max_output_tokens=default_max_output_tokens
@@ -26,7 +26,7 @@ class OpenAIProvider(LLMInterface):
         self.embedding_model_id=None
         self.embedding_model_dim=None
         self.client=OpenAI(api_key=self.api_key,
-                           base_url=self.api_url)
+                           base_url=self.base_url)
         
         self.logger=logging.getLogger(__name__)
 
@@ -49,6 +49,11 @@ class OpenAIProvider(LLMInterface):
         
         max_output_tokens= max_output_tokens if max_output_tokens else self.default_max_output_tokens
         temperature =temperature  if temperature  else self.default_temperature
+        if chat_history is None:
+            chat_history = []
+        elif isinstance(chat_history, str):
+            # If the system prompt was passed here, turn it into the first message
+            chat_history = [{"role": "system", "content": chat_history}]
 
         chat_history.append( self.construct_prompt(prompt=prompt,
                                                    role=LLMEnums.OPENAIENUMS.USER.value)

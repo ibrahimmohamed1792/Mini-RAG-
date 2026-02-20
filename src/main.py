@@ -7,6 +7,8 @@ from stores.llms.providers import GoogleProvider,OpenAIProvider
 from stores.vectordb import VectorDBProviderFactory
 from stores.vectordb.providers import QdrantDBProvider
 
+from stores.llms.templates.template_praser import template_praser
+
 
 app = FastAPI()
 @app.on_event("startup")
@@ -29,7 +31,10 @@ async def startup_span():
     app.embedding_client=Llm_provider_factory.create(provider=settings.EMBEDDING_BACKEND)
     app.embedding_client.set_embedding_model(model_id=settings.EMBEDDING_MODEL_ID,embedding_dim=settings.EMBEDDING_MODEL_SIZE)
 
-
+    app.template_parser = template_praser(
+            language=settings.PRIMARY_LANG,
+            default_language=settings.DEFAULT_LANG,
+        )
     app.vectordb_client=VectorDB_provider_factory.create(provider_name=settings.VECTOR_DB_BACKEND)
     app.vectordb_client.connect()
 

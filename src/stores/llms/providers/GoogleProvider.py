@@ -71,16 +71,30 @@ class GoogleProvider (LLMInterface):
         
         max_output_tokens= max_output_tokens if max_output_tokens else self.default_max_output_tokens
         temperature =temperature  if temperature  else self.default_tempreture
+        # Ensure chat_history is a list if None is passed
+        if chat_history is None:
+            chat_history = []
+        
+        # If a string was accidentally passed, wrap it in the proper format or handle it
+        if isinstance(chat_history, str):
+            # If it's a string, we treat it as an initial user message or log a warning
+            chat_history = [self.construct_prompt(prompt=chat_history, role=LLMEnums.GOOGLEENUMS.USER.value)]
 
-        current_messege=self.construct_prompt(prompt=prompt,role=LLMEnums.GOOGLEENUMS.USER.value)
-        full_content=chat_history+[current_messege]
+            current_messege=self.construct_prompt(prompt=prompt,role=LLMEnums.GOOGLEENUMS.USER.value)
+            full_content=chat_history+[current_messege]
+
+
+            current_message = self.construct_prompt(prompt=prompt, role=LLMEnums.GOOGLEENUMS.USER.value)
+            
+            # Now both sides are lists, so + works!
+            full_content = chat_history + [current_message]
 
         
         response = self.client.models.generate_content(
             model=self.generation_model_id,
             
             config=types.GenerateContentConfig(
-            system_instruction=LLMEnums.GOOGLEENUMS.SYSTEM_INSTRUCTIONS.value,
+            
             temperature=temperature,
             max_output_tokens=max_output_tokens),
             

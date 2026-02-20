@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     EMBEDDING_BACKEND: str
 
     OPENAI_API_KEY: str = None
-    OPENAI_API_URL: str = None
+    OPENAI_API_URL: str =  None
     GOOGLE_API_KEY: str = None
 
     GENERATION_MODEL_ID: str = None
@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     INPUT_DAFAULT_MAX_CHARACTERS: int = None
     GENERATION_DAFAULT_MAX_TOKENS: int = None
     GENERATION_DAFAULT_TEMPERATURE: float = None
+
+    PRIMARY_LANG:str="en"
+    DEFAULT_LANG:str="en"
 
 
 
