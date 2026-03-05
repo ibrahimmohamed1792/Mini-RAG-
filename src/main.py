@@ -8,9 +8,11 @@ from stores.vectordb import VectorDBProviderFactory
 from stores.vectordb.providers import QdrantDBProvider
 
 from stores.llms.templates.template_praser import template_praser
+from utils.metrics import setup_metrics
 
 
 app = FastAPI()
+setup_metrics(app)
 @app.on_event("startup")
 async def startup_span():
     settings=get_settings()
