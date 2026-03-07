@@ -3,6 +3,7 @@ from ..VectorDBInterface import VectorDBInterface
 from ..VectorDBEnums import DistanceMethodEnums
 import logging
 from typing import List
+from models.db_schemes import RetrivedChunk
 import uuid
 
 class QdrantDBProvider(VectorDBInterface):
@@ -157,13 +158,19 @@ class QdrantDBProvider(VectorDBInterface):
                 ]
             )
 
-        return self.client.query_points(
+        response= self.client.query_points(
             collection_name=collection_name,
             query=vector,
             query_filter=query_filter,
             limit=limit
         )
-        
+        return [
+        RetrivedChunk(
+            text=point.payload.get("text", ""), 
+            score=point.score
+        )
+        for point in response.points
+    ]
 
   
     

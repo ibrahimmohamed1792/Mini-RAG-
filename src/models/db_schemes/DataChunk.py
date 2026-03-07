@@ -12,6 +12,8 @@ class DataChunk(BaseModel):
     chunk_asset_id:ObjectId
 
 
+
+
     class Config:
         arbitrary_types_allowed=True
 
@@ -27,6 +29,12 @@ class DataChunk(BaseModel):
 
     }]
     
+
+
+class RetrivedChunk(BaseModel):
+    text:str
+    score:float
+
 
 
 

@@ -18,3 +18,5 @@ class ResponseSignal (Enum):
     VECTORDB_COLLECTION_RETRIEVED="here you go man sleep on it and don't tell no one"
     SEARCH_FAILED_ERROR="we couldn't find whatever nonsense you've been looking for"
     SEARCH_SUCESS="here is the best matches for the nonsense you've been looking for no need to thank me now FUCK OFF!"
+    RAG_ANSWER_SUCCESS="here it is hot from the know it all land"
+    RAG_ANSWER_ERROR="go ask you're mama she 'll know"

@@ -1,5 +1,5 @@
 from .BaseController import BaseController 
-from models.db_schemes import Project,DataChunk
+from models.db_schemes import Project,DataChunk,RetrivedChunk
 from typing import List
 from stores.llms.LLMEnums import DocumentTypeEnum
 import json
@@ -9,12 +9,13 @@ import json
 class NLPController(BaseController):
 
 
-    def __init__(self,embedding_client,generation_client,vectordb_client):
+    def __init__(self,embedding_client,generation_client,vectordb_client,template_parser):
         super().__init__()
 
         self.embedding_client= embedding_client
         self.generation_client=generation_client
         self.vectordb_client=vectordb_client
+        self.template_parser=template_parser
 
 
     def create_collection_name(self,project_id:str):
@@ -63,6 +64,36 @@ class NLPController(BaseController):
                                                      source_file=None,
                                                      vector= self.embedding_client.embed_text(text,document_type=DocumentTypeEnum.QUERY.value),
                                                      limit=limit)
+
+
+    def answer_rag(self,project:Project,query:str,limit:int=5):
+        answer, full_prompt, chat_history = None, None, None
+        retrieved_documents=self.search_index(project=project,text=query,limit=limit)
+        if not retrieved_documents or len(retrieved_documents)==0:
+            return  answer, full_prompt, chat_history
+        
+        system_prompt=self.template_parser.get("rag","system_prompt")
+        
+        document_prompt= "\n".join([
+            self.template_parser.get("rag", "document_prompt", {
+                    "doc_num": idx + 1,
+                    "chunk_text": doc.text,
+            })
+            for idx, doc in enumerate(retrieved_documents)
+        ])
+
+
+        footer_prompt=self.template_parser.get("rag","footer_prompt",{"query":query})
+
+        full_prompt = "\n\n".join([ document_prompt,  footer_prompt])
+
+        answer=self.generation_client.generate_text(
+            chat_history=system_prompt,
+            prompt=full_prompt
+        )
+
+        return answer,full_prompt,chat_history
+        
 
 
 
